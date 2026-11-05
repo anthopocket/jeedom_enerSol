@@ -1,0 +1,66 @@
+<div class="cmd cmd-widget ea-syn" data-type="info" data-subtype="string" data-template="synthese" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#" style="width:440px;max-width:100%;">
+  <div class="ea-syn-body"><span style="color:#9aa3ae">enerSol : en attente du démon…</span></div>
+  <style>
+    .ea-syn{font-family:inherit;text-align:left;padding:4px 2px}
+    .ea-syn .hd{display:flex;justify-content:space-between;font-size:13px;color:#9aa3ae;margin-bottom:6px}
+    .ea-syn .row{display:flex;gap:6px;margin-bottom:8px}
+    .ea-syn .st{flex:1;border-radius:9px;padding:7px 6px;text-align:center;line-height:1.25}
+    .ea-syn .st .i{font-size:18px}.ea-syn .st .v{font-size:13.5px;font-weight:700}.ea-syn .st .s{font-size:11px;opacity:.8}
+    .ea-syn .ok{background:rgba(57,181,106,.16);border:1px solid rgba(57,181,106,.45)}
+    .ea-syn .warn{background:rgba(245,184,46,.14);border:1px solid rgba(245,184,46,.45)}
+    .ea-syn .bad{background:rgba(226,80,76,.15);border:1px solid rgba(226,80,76,.45)}
+    .ea-syn .k{font-size:10.5px;letter-spacing:1px;color:#9aa3ae;text-transform:uppercase;margin:2px 0 3px}
+    .ea-syn .d{display:flex;gap:8px;align-items:baseline;padding:4px 4px;border-bottom:1px solid rgba(128,128,128,.18);font-size:12.5px}
+    .ea-syn .d:last-child{border-bottom:none}
+    .ea-syn .d .h{width:40px;flex:none;opacity:.65;font-variant-numeric:tabular-nums}
+    .ea-syn .d .m{width:16px;flex:none}
+    .ea-syn .d small{display:block;opacity:.65;font-size:11px}
+    .ea-syn .d.en_cours{background:rgba(57,181,106,.12);border-radius:6px}
+    .ea-syn .d.imprevu .t{color:#f06292}
+  </style>
+  <script>
+    (function () {
+      var root = document.querySelector('.ea-syn[data-cmd_uid="#uid#"]')
+      function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML }
+      function decode(b64) {
+        try {
+          var bin = atob(b64), bytes = new Uint8Array(bin.length)
+          for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+          return JSON.parse(new TextDecoder('utf-8').decode(bytes))
+        } catch (e) { return null }
+      }
+      function render(b64) {
+        var d = decode(b64), body = root && root.querySelector('.ea-syn-body')
+        if (!body) return
+        if (!d || !d.heure) { body.innerHTML = '<span style="color:#9aa3ae">enerSol : en attente des premières mesures…</span>'; return }
+        var n = d.nuit || {}, a = d.achat || {}, c = d.confort || {}
+        var h = '<div class="hd"><span>☀️ <b>enerSol</b></span><span>' + esc(d.jour) + ' · ' + esc(d.heure) + '</span></div><div class="row">'
+        h += '<div class="st ' + (n.ok ? 'ok' : 'warn') + '"><div class="i">🔋</div><div class="v">' + (n.ok ? 'On tient la nuit' : 'Nuit juste') + '</div><div class="s">'
+          + (n.batterie_reveil != null ? 'batterie à ' + esc(n.batterie_reveil) + ' % à ' + esc(n.reveil) : '') + '</div></div>'
+        h += '<div class="st ' + (a.kwh > 0.2 ? (a.kwh > 2 ? 'bad' : 'warn') : 'ok') + '"><div class="i">🔌</div><div class="v">'
+          + (a.kwh > 0.2 ? '≈ ' + String(a.kwh).replace('.', ',') + ' kWh' : 'Pas d\'achat') + '</div><div class="s">'
+          + (a.kwh > 0.2 ? 'd\'achat possible' + (a.quand ? ' vers ' + esc(a.quand) : '') : 'prévu d\'ici demain') + '</div></div>'
+        h += '<div class="st ' + (c.ok ? 'ok' : 'warn') + '"><div class="i">🏠</div><div class="v">'
+          + (c.tint != null ? String(c.tint).replace('.', ',') + ' °C' : '—') + '</div><div class="s">'
+          + (c.tint == null ? 'pas de sonde' : (c.ok ? 'confort respecté' : 'sous ' + String(c.min).replace('.', ',') + ' °C')) + '</div></div></div>'
+        h += '<div class="k">Mes décisions aujourd\'hui</div>'
+        var ic = {fait: '✅', en_cours: '▶️', prevu: '⏳', imprevu: '⚡'}
+        var list = d.decisions || []
+        if (!list.length) h += '<div class="d"><span class="t" style="opacity:.7">Rien à décider pour l\'instant</span></div>'
+        list.forEach(function (it) {
+          h += '<div class="d ' + esc(it.etat) + '"><span class="h">' + esc(it.h) + '</span><span class="m">' + (ic[it.etat] || '•')
+            + '</span><span class="t">' + (it.etat === 'en_cours' ? '<b>' + esc(it.txt) + '</b>' : esc(it.txt))
+            + (it.sous ? '<small>' + esc(it.sous) + '</small>' : '') + '</span></div>'
+        })
+        body.innerHTML = h
+      }
+      function onUpdate(o) { render(o.display_value || o.value || '') }
+      if (jeedom.cmd.addUpdateFunction) {
+        jeedom.cmd.addUpdateFunction('#id#', onUpdate)
+      } else {
+        jeedom.cmd.update['#id#'] = onUpdate
+      }
+      render('#state#')
+    })()
+  </script>
+</div>

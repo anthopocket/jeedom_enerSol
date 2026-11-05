@@ -1,0 +1,19 @@
+{
+    "id": "enerSol",
+    "name": "enerSol",
+    "description": {
+        "fr_FR": "Gestion de l'énergie solaire : batterie d'abord, surplus réparti en temps réel (chauffage, machines, voiture, VMI, chauffe-eau), apprentissage des cycles et du chauffage, conseils pour les jours suivants."
+    },
+    "licence": "AGPL",
+    "author": "Anthony",
+    "require": "4.4",
+    "category": "energy",
+    "hasDependency": true,
+    "hasOwnDeamon": true,
+    "maxDependancyInstallTime": 20,
+    "documentation": "",
+    "changelog": "",
+    "language": ["fr_FR"],
+    "compatibility": ["diy", "docker", "v4"],
+    "specialAttributes": {}
+}
